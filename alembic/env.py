@@ -6,7 +6,7 @@ from alembic import context
 
 # Load app config and models so autogenerate can detect schema changes.
 from app.config import settings
-from app.database import Base
+from app.models.base import Base
 import app.models  # noqa: F401 — ensures all models are registered on Base.metadata
 
 alembic_config = context.config
