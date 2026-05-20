@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+
+from app.schemas.types import DatetimeFormatted
 
 
 class UserRegister(BaseModel):
@@ -40,7 +40,7 @@ class UserResponse(BaseModel):
     email: str
     username: str
     is_active: bool
-    created_at: datetime
+    created_at: DatetimeFormatted
 
 
 class TokenResponse(BaseModel):
