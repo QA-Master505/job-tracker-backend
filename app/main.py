@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.database import check_db_connection
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 
@@ -21,4 +22,9 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "app": settings.app_name}
+    db_ok = check_db_connection()
+    return {
+        "status": "ok",
+        "app": settings.app_name,
+        "database": "connected" if db_ok else "unavailable",
+    }
