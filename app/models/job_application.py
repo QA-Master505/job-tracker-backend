@@ -12,10 +12,13 @@ from app.models.base import Base
 
 class ApplicationStatus(str, enum.Enum):
     applied = "applied"
-    interview = "interview"
+    phone_interview = "phone_interview"
+    virtual_interview = "virtual_interview"
+    onsite_interview = "onsite_interview"
     offer = "offer"
     rejected = "rejected"
     no_response = "no_response"
+    withdrawn = "withdrawn"
 
 
 class JobApplication(Base):

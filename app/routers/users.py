@@ -13,6 +13,11 @@ from app.utils.security import hash_password, verify_password
 router = APIRouter(prefix="/users", tags=["users"])
 
 
+@router.get("/me", response_model=UserResponse)
+def get_profile(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
 @router.put("/me", response_model=UserResponse)
 def update_profile(
     data: UserProfileUpdate,
