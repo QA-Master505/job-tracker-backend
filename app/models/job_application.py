@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import enum
 from datetime import date, datetime
-from typing import Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import Date, DateTime, Enum as SAEnum, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+if TYPE_CHECKING:
+    from app.models.interview_round import InterviewRound
 
 
 class ApplicationStatus(str, enum.Enum):
@@ -46,3 +49,6 @@ class JobApplication(Base):
     )
 
     owner = relationship("User", back_populates="job_applications")
+    interview_rounds: Mapped[List[InterviewRound]] = relationship(
+        "InterviewRound", back_populates="job_application", cascade="all, delete-orphan"
+    )
