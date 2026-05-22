@@ -1,4 +1,7 @@
-.PHONY: help run dev start migrate migration rollback install freeze test
+.PHONY: help run dev start migrate migration rollback install freeze test \
+        docker-up docker-start docker-stop docker-clean docker-logs \
+        docker-logs-backend docker-logs-db docker-migrate docker-db-shell \
+        docker-shell docker-rebuild
 
 # Default target
 help:
@@ -16,6 +19,18 @@ help:
 	@echo "  make rollback                   - Roll back the last migration"
 	@echo ""
 	@echo "  make test                       - Run test suite"
+	@echo ""
+	@echo "  make docker-up                  - Start all services (with build)"
+	@echo "  make docker-start               - Start in background"
+	@echo "  make docker-stop                - Stop all containers"
+	@echo "  make docker-clean               - Stop and remove volumes"
+	@echo "  make docker-logs                - Stream all logs"
+	@echo "  make docker-logs-backend        - Stream backend logs"
+	@echo "  make docker-logs-db             - Stream database logs"
+	@echo "  make docker-migrate             - Run migrations in container"
+	@echo "  make docker-db-shell            - Open psql shell"
+	@echo "  make docker-shell               - Open bash in backend container"
+	@echo "  make docker-rebuild             - Tear down and rebuild everything"
 
 # Start the development server (requires venv already activated)
 run:
@@ -56,3 +71,53 @@ freeze:
 # Run the test suite
 test:
 	.venv/bin/pytest
+
+
+# ============================================================
+# DOCKER COMMANDS
+# ============================================================
+
+# Start all services and rebuild images
+docker-up:
+	docker-compose up --build
+
+# Start in detached (background) mode
+docker-start:
+	docker-compose up -d --build
+
+# Stop all running containers
+docker-stop:
+	docker-compose down
+
+# Stop containers and remove volumes (clean slate)
+docker-clean:
+	docker-compose down -v
+
+# Stream logs from all services
+docker-logs:
+	docker-compose logs -f
+
+# Stream logs from the backend only
+docker-logs-backend:
+	docker-compose logs -f backend
+
+# Stream logs from the database only
+docker-logs-db:
+	docker-compose logs -f db
+
+# Run Alembic migrations inside the running backend container
+docker-migrate:
+	docker-compose exec backend alembic upgrade head
+
+# Open a psql shell in the running database container
+docker-db-shell:
+	docker-compose exec db psql -U postgres -d job_tracker_db
+
+# Open a bash shell in the running backend container
+docker-shell:
+	docker-compose exec backend bash
+
+# Tear down and rebuild everything from scratch
+docker-rebuild:
+	docker-compose down
+	docker-compose up --build

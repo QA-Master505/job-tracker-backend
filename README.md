@@ -11,6 +11,7 @@ A RESTful API for the Job Application Tracker — built with FastAPI and Postgre
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
 - [Makefile Commands](#makefile-commands)
+- [Docker Setup](#docker-setup)
 - [API Endpoints](#api-endpoints)
 - [Environment Variables](#environment-variables)
 - [Testing](#testing)
@@ -190,6 +191,71 @@ make migration MSG="add salary field to job applications"
 # Roll back if something went wrong
 make rollback
 ```
+
+---
+
+## Docker Setup
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- Docker Compose (included with Docker Desktop)
+
+### Quick Start
+
+Start the database and backend with a single command:
+
+```bash
+make docker-up
+```
+
+This builds the image, starts PostgreSQL, waits for it to be healthy, runs all pending migrations, then starts the API server with hot reload.
+
+### Services
+
+| Service | URL |
+|---------|-----|
+| Backend API | http://localhost:8000 |
+| Swagger docs | http://localhost:8000/docs |
+| PostgreSQL | localhost:5432 |
+
+### Docker Commands
+
+| Command | Description | Original Command |
+|---------|-------------|-----------------|
+| `make docker-up` | Start all services (with build) | `docker-compose up --build` |
+| `make docker-start` | Start in background | `docker-compose up -d --build` |
+| `make docker-stop` | Stop all containers | `docker-compose down` |
+| `make docker-clean` | Stop and remove volumes (clean slate) | `docker-compose down -v` |
+| `make docker-logs` | Stream logs from all services | `docker-compose logs -f` |
+| `make docker-logs-backend` | Stream backend logs only | `docker-compose logs -f backend` |
+| `make docker-logs-db` | Stream database logs only | `docker-compose logs -f db` |
+| `make docker-migrate` | Run migrations inside the container | `docker-compose exec backend alembic upgrade head` |
+| `make docker-db-shell` | Open a psql shell | `docker-compose exec db psql -U postgres -d job_tracker_db` |
+| `make docker-shell` | Open bash in the backend container | `docker-compose exec backend bash` |
+| `make docker-rebuild` | Tear down and rebuild everything | `docker-compose down && docker-compose up --build` |
+
+### How it works
+
+```
+docker-compose up --build
+        │
+        ├─ builds backend image (python:3.11-slim + requirements.txt)
+        │
+        ├─ starts postgres:16 container
+        │        └─ waits for healthcheck (pg_isready)
+        │
+        └─ starts backend container
+                 ├─ alembic upgrade head   ← runs migrations automatically
+                 └─ uvicorn app.main:app --reload
+```
+
+### Notes
+
+- PostgreSQL data is persisted in a Docker named volume (`postgres_data`). Run `make docker-clean` to wipe it.
+- The backend mounts `.:/app` so code changes are reflected immediately without rebuilding the image.
+- Environment variables in `docker-compose.yml` are for **development only**. Never use these values in production.
+- A local `.env` file will **not** be read inside the container — set variables directly in `docker-compose.yml` or pass them with `docker-compose --env-file`.
 
 ---
 
@@ -403,12 +469,14 @@ make test
 
 ## Deployment
 
-> Deployment configuration is in progress. This section will be updated with Railway / Render / Docker instructions.
+> Full deployment guides for Railway and Render are in progress.
 
-Checklist before deploying:
+### Pre-deploy checklist
 
 - [ ] Set `DEBUG=False`
-- [ ] Use a strong random `SECRET_KEY` (e.g. `openssl rand -hex 32`)
-- [ ] Set `DATABASE_URL` to the production database connection string
-- [ ] Run `make migrate` against the production database
-- [ ] Restrict `allow_origins` in `main.py` to your production frontend URL
+- [ ] Generate a strong `SECRET_KEY`: `openssl rand -hex 32`
+- [ ] Set `DATABASE_URL` to the production connection string
+- [ ] Run migrations against the production database
+- [ ] Restrict `allow_origins` in `app/main.py` to your production frontend URL
+- [ ] Remove `--reload` from the uvicorn command
+- [ ] Do not expose `docker-compose.yml` secrets — use environment variables or a secrets manager
