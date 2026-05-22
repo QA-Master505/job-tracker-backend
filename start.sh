@@ -10,17 +10,23 @@ inspector = inspect(engine)
 tables = inspector.get_table_names()
 print(f"Tables found: {tables}")
 
+required = ["users", "job_applications", "interview_rounds"]
 has_version_table = "alembic_version" in tables
-has_users_table = "users" in tables
+any_missing = any(t not in tables for t in required)
 
-if has_version_table and not has_users_table:
-    print("Detected stale alembic_version (version recorded but tables missing). Resetting...")
+if has_version_table and any_missing:
+    print("Detected stale state (alembic_version exists but tables incomplete). Resetting...")
     with engine.connect() as conn:
+        for t in ["interview_rounds", "job_applications", "users"]:
+            if t in tables:
+                conn.execute(text(f"DROP TABLE {t} CASCADE"))
+                print(f"Dropped partial table: {t}")
         conn.execute(text("DROP TABLE alembic_version"))
         conn.commit()
-    print("alembic_version dropped — migrations will run from scratch.")
+    print("Reset complete — migrations will run from scratch.")
 else:
-    print(f"State OK — alembic_version: {has_version_table}, users: {has_users_table}")
+    missing = [t for t in required if t not in tables]
+    print(f"State OK — missing tables (expected on fresh DB): {missing}")
 EOF
 
 echo "=== Running migrations ==="

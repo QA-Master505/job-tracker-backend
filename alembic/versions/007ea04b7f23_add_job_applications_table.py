@@ -27,7 +27,7 @@ def upgrade() -> None:
     sa.Column('company_name', sa.String(length=255), nullable=False),
     sa.Column('job_title', sa.String(length=255), nullable=False),
     sa.Column('job_url', sa.String(length=500), nullable=True),
-    sa.Column('status', sa.Enum('applied', 'interview', 'offer', 'rejected', 'no_response', name='applicationstatus', native_enum=False, length=20), nullable=False),
+    sa.Column('status', sa.Enum('applied', 'phone_interview', 'virtual_interview', 'onsite_interview', 'offer', 'rejected', 'no_response', 'withdrawn', name='applicationstatus', native_enum=False, length=20), nullable=False),
     sa.Column('applied_date', sa.Date(), nullable=False),
     sa.Column('notes', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
