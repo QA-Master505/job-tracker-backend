@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +11,14 @@ class Settings(BaseSettings):
     secret_key: str = "change-me"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+
+    @field_validator("database_url")
+    @classmethod
+    def normalise_database_url(cls, v: str) -> str:
+        # Railway supplies postgres:// — SQLAlchemy 2.x requires postgresql://
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql://", 1)
+        return v
 
 
 settings = Settings()
