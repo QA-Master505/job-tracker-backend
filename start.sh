@@ -29,6 +29,12 @@ else:
     print(f"State OK — missing tables (expected on fresh DB): {missing}")
 EOF
 
+echo "=== Migration files ==="
+ls -la alembic/versions/
+
+echo "=== SQL preview (dry-run) ==="
+alembic upgrade head --sql
+
 echo "=== Running migrations ==="
 alembic upgrade head
 
