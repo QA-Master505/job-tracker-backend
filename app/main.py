@@ -10,7 +10,6 @@ app = FastAPI(title=settings.app_name, debug=settings.debug)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:5174",
         "https://job-tracker-frontend-green-sigma.vercel.app",
