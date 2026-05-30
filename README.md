@@ -359,7 +359,7 @@ Authorization: Bearer <access_token>
 | `PUT` | `/jobs/{id}` | Update a job application |
 | `DELETE` | `/jobs/{id}` | Delete a job application |
 
-**Application status values:** `applied` · `interview` · `offer` · `rejected` · `no_response`
+**Application status values:** `applied` · `phone_interview` · `virtual_interview` · `onsite_interview` · `offer` · `rejected` · `no_response` · `withdrawn`
 
 **Create** — `POST /jobs`
 
@@ -395,7 +395,7 @@ Only include the fields you want to change:
 
 ```json
 {
-  "status": "interview",
+  "status": "phone_interview",
   "notes": "Phone screen scheduled for Friday"
 }
 ```
