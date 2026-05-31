@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     secret_key: str = "change-me"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+    cookie_secure: bool = False
+    cookie_same_site: str = "lax"
+    cookie_domain: str = ""
 
     @field_validator("database_url")
     @classmethod
