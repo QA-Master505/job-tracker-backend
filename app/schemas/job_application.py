@@ -58,3 +58,11 @@ class JobApplicationResponse(BaseModel):
     notes: Optional[str]
     created_at: DatetimeFormatted
     updated_at: DatetimeFormatted
+
+
+class PaginatedJobsResponse(BaseModel):
+    items: list[JobApplicationResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

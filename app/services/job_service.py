@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -41,3 +42,29 @@ def update_job(db: Session, job: JobApplication, data: JobApplicationUpdate) -> 
 def delete_job(db: Session, job: JobApplication) -> None:
     db.delete(job)
     db.commit()
+
+
+def get_jobs_paginated(
+    db: Session,
+    user_id: int,
+    page: int = 1,
+    page_size: int = 20,
+) -> dict:
+    page = max(1, page)
+    page_size = max(1, min(100, page_size))
+
+    base = db.query(JobApplication).filter(JobApplication.user_id == user_id)
+    total = base.count()
+    items = (
+        base.order_by(JobApplication.applied_date.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": math.ceil(total / page_size) if total else 0,
+    }

@@ -8,12 +8,13 @@ from app.schemas.job_application import (
     JobApplicationCreate,
     JobApplicationResponse,
     JobApplicationUpdate,
+    PaginatedJobsResponse,
 )
 from app.services.job_service import (
     create_job,
     delete_job,
     get_job_by_id,
-    get_jobs_for_user,
+    get_jobs_paginated,
     update_job,
 )
 
@@ -29,12 +30,14 @@ def _get_owned_job(job_id: int, current_user: User, db: Session):
     return job
 
 
-@router.get("", response_model=list[JobApplicationResponse])
+@router.get("", response_model=PaginatedJobsResponse)
 def list_jobs(
+    page: int = 1,
+    page_size: int = 20,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return get_jobs_for_user(db, current_user.id)
+    return get_jobs_paginated(db, current_user.id, page=page, page_size=page_size)
 
 
 @router.post("", response_model=JobApplicationResponse, status_code=status.HTTP_201_CREATED)

@@ -26,22 +26,28 @@ def _make_user(client):
 # ── GET /jobs ─────────────────────────────────────────────────────────────────
 
 def test_list_jobs_empty_for_new_user(client, auth_headers):
-    # A brand-new user has no jobs
+    # A brand-new user has no jobs; paginated envelope reflects zero results
     response = client.get("/jobs", headers=auth_headers)
 
     assert response.status_code == 200
-    assert response.json() == []
+    data = response.json()
+    assert data["items"] == []
+    assert data["total"] == 0
+    assert data["total_pages"] == 0
 
 
 def test_list_jobs_returns_created_jobs(client, auth_headers):
-    # Jobs created by the user appear in the list
+    # Jobs created by the user appear in the items list with correct total
     client.post("/jobs", json=JOB_PAYLOAD, headers=auth_headers)
     client.post("/jobs", json={**JOB_PAYLOAD, "company_name": "Beta Ltd"}, headers=auth_headers)
 
     response = client.get("/jobs", headers=auth_headers)
 
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    data = response.json()
+    assert len(data["items"]) == 2
+    assert data["total"] == 2
+    assert data["total_pages"] == 1
 
 
 # ── POST /jobs ────────────────────────────────────────────────────────────────
