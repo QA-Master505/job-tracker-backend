@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
@@ -26,7 +27,7 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(data: UserLogin, db: Session = Depends(get_db)):
+def login(data: UserLogin, response: Response, db: Session = Depends(get_db)):
     user = authenticate_user(db, data.email, data.password)
     if not user:
         raise HTTPException(
@@ -39,6 +40,17 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
             detail="Account is inactive",
         )
     token = create_access_token({"sub": str(user.id)})
+    cookie_kwargs = dict(
+        key="access_token",
+        value=token,
+        httponly=True,
+        max_age=settings.access_token_expire_minutes * 60,
+        samesite=settings.cookie_same_site,
+        secure=settings.cookie_secure,
+    )
+    if settings.cookie_domain:
+        cookie_kwargs["domain"] = settings.cookie_domain
+    response.set_cookie(**cookie_kwargs)
     return TokenResponse(access_token=token)
 
 
@@ -48,5 +60,13 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/logout")
-def logout(current_user: User = Depends(get_current_user)):
+def logout(response: Response, current_user: User = Depends(get_current_user)):
+    response.set_cookie(
+        key="access_token",
+        value="",
+        httponly=True,
+        max_age=0,
+        samesite=settings.cookie_same_site,
+        secure=settings.cookie_secure,
+    )
     return {"message": "Successfully logged out"}
