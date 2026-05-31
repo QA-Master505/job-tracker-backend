@@ -128,3 +128,21 @@ def test_logout_success(client, auth_headers):
 
     assert response.status_code == 200
     assert response.json()["message"] == "Successfully logged out"
+
+
+# ── DELETE /users/me ──────────────────────────────────────────────────────────
+
+def test_delete_account_returns_204(client, auth_headers):
+    # DELETE /users/me returns 204 No Content
+    response = client.delete("/users/me", headers=auth_headers)
+
+    assert response.status_code == 204
+
+
+def test_delete_account_invalidates_access(client, auth_headers):
+    # After deletion, the same token no longer resolves a user — GET /auth/me returns 401
+    client.delete("/users/me", headers=auth_headers)
+
+    response = client.get("/auth/me", headers=auth_headers)
+
+    assert response.status_code == 401

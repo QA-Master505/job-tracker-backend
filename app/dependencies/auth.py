@@ -31,7 +31,7 @@ def get_current_user(
 
     user = get_user_by_id(db, int(user_id))
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise credentials_exc
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is inactive")
     return user
