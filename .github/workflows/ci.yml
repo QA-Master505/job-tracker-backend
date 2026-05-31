@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  lint:
-    name: Syntax check
+  test:
+    name: Test suite
     runs-on: ubuntu-latest
 
     steps:
@@ -24,10 +24,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Placeholder until a pytest suite is added in a future phase.
-      # Compiles every .py file to catch syntax errors and bad imports.
-      - name: Syntax check
-        run: |
-          find . -name "*.py" -not -path "./.venv/*" | \
-            xargs python -m py_compile && \
-            echo "All files OK"
+      - name: Run tests
+        env:
+          DATABASE_URL: sqlite:///./test.db
+          SECRET_KEY: ci-test-secret
+        run: pytest --tb=short -q

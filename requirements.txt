@@ -10,3 +10,5 @@ psycopg2-binary==2.9.12
 bcrypt==5.0.0
 python-jose[cryptography]==3.5.0
 python-multipart==0.0.20
+pytest==8.4.2
+httpx==0.28.1
