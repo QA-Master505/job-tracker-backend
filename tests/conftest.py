@@ -81,6 +81,32 @@ def auth_headers(client, registered_user):
 
 
 @pytest.fixture(scope="function")
+def admin_user(client, db):
+    uid = uuid4().hex[:8]
+    payload = {"email": f"admin_{uid}@example.com", "username": f"admin_{uid}", "password": "testpass123"}
+    client.post("/auth/register", json=payload)
+    from app.models.user import User
+    u = db.query(User).filter(User.email == payload["email"]).first()
+    u.role = "admin"
+    db.commit()
+    token = client.post("/auth/login", json={"email": payload["email"], "password": payload["password"]}).json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="function")
+def superadmin_user(client, db):
+    uid = uuid4().hex[:8]
+    payload = {"email": f"superadmin_{uid}@example.com", "username": f"superadmin_{uid}", "password": "testpass123"}
+    client.post("/auth/register", json=payload)
+    from app.models.user import User
+    u = db.query(User).filter(User.email == payload["email"]).first()
+    u.role = "superadmin"
+    db.commit()
+    token = client.post("/auth/login", json={"email": payload["email"], "password": payload["password"]}).json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="function")
 def sample_job(client, auth_headers):
     resp = client.post("/jobs", json={
         "company_name": "Acme Corp",
