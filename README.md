@@ -786,64 +786,71 @@ SECRET_KEY=your-secret-key-change-in-production
 
 ## Testing
 
-The test suite uses `pytest` with a fully isolated in-memory SQLite database — no running Postgres instance is required.
+The backend has two separate test layers. Full documentation for both lives in
+the [job-tracker-tests](https://github.com/QA-Master505/job-tracker-tests)
+repository.
 
-### Test breakdown
+### API Layer Tests — SQLite (Fast)
 
-| File | Tests | What is covered |
-|------|-------|----------------|
-| `tests/test_auth.py` | 13 | Register (success, duplicate email/username, short password/username), login (success, wrong password, unknown email), `GET /auth/me` (authenticated / unauthenticated), logout, account deletion and token invalidation |
-| `tests/test_jobs.py` | 13 | Paginated list (empty + populated), create (success + missing field), get (success, 404, 403 cross-user), update (success, 404, 403 cross-user), delete (success + cascade verify, 404, 403 cross-user) |
-| `tests/test_interviews.py` | 9 | List (empty + populated), create (success, `round_number` auto-increment to 2, 404 parent), update (success, 404), delete (success + list verify, 404) |
-| `tests/test_admin.py` | 40 | 7× 401 (unauthenticated), 7× 403 (regular user), 2× 403 (admin blocked from superadmin endpoints), 5× admin allowed reads, pagination envelope shape, `job_count` field, role/status query filters, get by id (200 + 404), role change (200 + 422 invalid value), status toggle (deactivate + reactivate), delete (204 + 404), stats shape + value accuracy, audit log pagination + newest-first order, 3× audit-entry-written-on-mutation |
+Uses FastAPI `TestClient` with SQLite in-memory. No database or server setup
+required. Covers endpoints, status codes, response shapes, ownership
+enforcement, and role-based access control.
+
+| File | Tests | What It Covers |
+|------|-------|---------------|
+| `tests/test_auth.py` | 13 | Register, login, logout, `/auth/me`, account deletion |
+| `tests/test_jobs.py` | 13 | Full CRUD, ownership enforcement, pagination |
+| `tests/test_interviews.py` | 9 | CRUD, `round_number` auto-increment |
+| `tests/test_admin.py` | 40 | 401/403 matrix, role/status mutations, stats, audit log |
 | **Total** | **75** | |
 
-### How tests work
-
-- `conftest.py` creates a fresh in-memory SQLite database for every test function (function-scoped `StaticPool`)
-- `app.dependency_overrides[get_db]` injects the test session — no real database is touched
-- `FastAPI TestClient` drives all HTTP calls in-process — no network, no open ports
-- 8 shared fixtures: `_test_engine`, `db`, `client`, `registered_user`, `auth_headers`, `admin_user`, `superadmin_user`, `sample_job`
-
-### Running tests
-
 ```bash
-# Run the full test suite
+# Run all API layer tests
 make test
 
-# Run a specific file with verbose output
+# Run a specific file
 .venv/bin/pytest tests/test_admin.py -v
-
-# Short traceback output
-.venv/bin/pytest --tb=short -q
 ```
+→ Full API & Admin Test Documentation
+
+### Database Layer Tests — PostgreSQL (Real)
+Uses pytest + SQLAlchemy against a real Docker PostgreSQL instance (port 5433).
+Verifies constraints, cascade behaviour, migration integrity, and query
+correctness — things SQLite cannot replicate accurately. Uses a
+rollback-after-every-test fixture for full isolation.
+
+| File | What It Verifies |
+|------|-----------------|
+| `tests/db/test_user_model.py` | Unique constraints, NOT NULL, bcrypt format, default role |
+| `tests/db/test_job_model.py` | FK enforcement, CASCADE delete chain, enum gap finding |
+| `tests/db/test_migrations.py` | Alembic head, all tables present, column verification |
+| `tests/db/test_queries.py` | Pagination, aggregation, filter isolation |
+| `tests/db/test_admin_service.py` | Audit log atomicity, SET NULL on delete, stats accuracy |
+
+```bash
+# Start Docker PostgreSQL (port 5433)
+docker start job-tracker-db-test
+
+# Run migrations against test DB
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/job_tracker_test \
+  alembic upgrade head
+
+# Run all DB layer tests
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/job_tracker_test \
+  pytest tests/db/ -v
+```
+→ Full Database Automation Test Documentation
 
 ---
 
 ## CI/CD
 
-### GitHub Actions
+The GitHub Actions workflow (.github/workflows/ci.yml) runs the 75 API layer
+tests automatically on every push and pull request to main. No PostgreSQL
+container is needed — SQLite runs entirely in-memory.
 
-The CI pipeline runs automatically on every push and pull request to `main`.
-
-**Workflow file:** `.github/workflows/ci.yml`
-
-**Steps:**
-
-1. Check out the repository
-2. Set up Python 3.11 (with pip cache keyed on `requirements.txt`)
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run the full pytest suite (`DATABASE_URL=sqlite:///./test.db`, `SECRET_KEY=ci-test-secret`)
-
-```yaml
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-```
-
-No Postgres container is needed — all 75 tests run against SQLite in-memory and are completely self-contained.
+Database layer tests are run locally against Docker and are planned for
+addition to CI with a PostgreSQL service block in a future update.
 
 ---
 
