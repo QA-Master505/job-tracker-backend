@@ -786,60 +786,71 @@ SECRET_KEY=your-secret-key-change-in-production
 
 ## Testing
 
-This project has two layers of automated tests. Full documentation for each
-suite lives in the [job-tracker-tests](https://github.com/QA-Master505/job-tracker-tests) repository.
+The backend has two separate test layers. Full documentation for both lives in
+the [job-tracker-tests](https://github.com/QA-Master505/job-tracker-tests)
+repository.
 
-### API Layer Tests
-Fast tests that verify endpoint behaviour, status codes, and response shapes
-using FastAPI's TestClient and SQLite in-memory. 75 tests across auth, jobs,
-interviews, and admin.
+### API Layer Tests — SQLite (Fast)
 
-→ [API & Admin Test Documentation](https://github.com/QA-Master505/job-tracker-tests/blob/main/docs/README-api-tests.md)
+Uses FastAPI `TestClient` with SQLite in-memory. No database or server setup
+required. Covers endpoints, status codes, response shapes, ownership
+enforcement, and role-based access control.
 
-### Database Layer Tests
-Pytest + SQLAlchemy tests that verify PostgreSQL constraints, cascade behaviour,
-migration integrity, and query correctness against a real Docker PostgreSQL
-instance (port 5433). These tests run independently of the HTTP layer.
-
-→ [Database Automation Test Documentation](https://github.com/QA-Master505/job-tracker-tests/blob/main/docs/README-database-automation-tests.md)
-
-### Running Tests Locally
+| File | Tests | What It Covers |
+|------|-------|---------------|
+| `tests/test_auth.py` | 13 | Register, login, logout, `/auth/me`, account deletion |
+| `tests/test_jobs.py` | 13 | Full CRUD, ownership enforcement, pagination |
+| `tests/test_interviews.py` | 9 | CRUD, `round_number` auto-increment |
+| `tests/test_admin.py` | 40 | 401/403 matrix, role/status mutations, stats, audit log |
+| **Total** | **75** | |
 
 ```bash
-# API layer tests (SQLite, no Docker needed)
-pytest tests/ -v
+# Run all API layer tests
+make test
 
-# Database layer tests (requires Docker PostgreSQL on port 5433)
-docker start job-tracker-db-test
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/job_tracker_test pytest tests/db/ -v
+# Run a specific file
+.venv/bin/pytest tests/test_admin.py -v
 ```
+→ Full API & Admin Test Documentation
+
+### Database Layer Tests — PostgreSQL (Real)
+Uses pytest + SQLAlchemy against a real Docker PostgreSQL instance (port 5433).
+Verifies constraints, cascade behaviour, migration integrity, and query
+correctness — things SQLite cannot replicate accurately. Uses a
+rollback-after-every-test fixture for full isolation.
+
+| File | What It Verifies |
+|------|-----------------|
+| `tests/db/test_user_model.py` | Unique constraints, NOT NULL, bcrypt format, default role |
+| `tests/db/test_job_model.py` | FK enforcement, CASCADE delete chain, enum gap finding |
+| `tests/db/test_migrations.py` | Alembic head, all tables present, column verification |
+| `tests/db/test_queries.py` | Pagination, aggregation, filter isolation |
+| `tests/db/test_admin_service.py` | Audit log atomicity, SET NULL on delete, stats accuracy |
+
+```bash
+# Start Docker PostgreSQL (port 5433)
+docker start job-tracker-db-test
+
+# Run migrations against test DB
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/job_tracker_test \
+  alembic upgrade head
+
+# Run all DB layer tests
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/job_tracker_test \
+  pytest tests/db/ -v
+```
+→ Full Database Automation Test Documentation
 
 ---
 
 ## CI/CD
 
-### GitHub Actions
+The GitHub Actions workflow (.github/workflows/ci.yml) runs the 75 API layer
+tests automatically on every push and pull request to main. No PostgreSQL
+container is needed — SQLite runs entirely in-memory.
 
-The CI pipeline runs automatically on every push and pull request to `main`.
-
-**Workflow file:** `.github/workflows/ci.yml`
-
-**Steps:**
-
-1. Check out the repository
-2. Set up Python 3.11 (with pip cache keyed on `requirements.txt`)
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run the full pytest suite (`DATABASE_URL=sqlite:///./test.db`, `SECRET_KEY=ci-test-secret`)
-
-```yaml
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-```
-
-No Postgres container is needed — all 75 tests run against SQLite in-memory and are completely self-contained.
+Database layer tests are run locally against Docker and are planned for
+addition to CI with a PostgreSQL service block in a future update.
 
 ---
 
