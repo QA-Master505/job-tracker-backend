@@ -108,7 +108,7 @@ job-tracker-backend/
 │   │
 │   ├── services/
 │   │   ├── auth_service.py        # get_user_by_email/username/id, create_user, authenticate_user
-│   │   ├── job_service.py         # CRUD + get_jobs_paginated (offset/limit/ceil, max page_size 100)
+│   │   ├── job_service.py         # CRUD + get_jobs_paginated (offset/limit/ceil, max page_size 10)
 │   │   ├── interview_service.py   # CRUD + MAX(round_number)+1 auto-assignment on insert
 │   │   └── admin_service.py       # User management, log_admin_action, stats via subquery/COALESCE, aliased audit join
 │   │
@@ -486,7 +486,7 @@ All job application endpoints require authentication. Users can only access thei
 | Parameter | Default | Max | Description |
 |-----------|---------|-----|-------------|
 | `page` | `1` | — | Page number |
-| `page_size` | `20` | `100` | Results per page |
+| `page_size` | `6` | `10` | Results per page |
 
 **Application status values:**
 
@@ -527,8 +527,8 @@ All job application endpoints require authentication. Users can only access thei
   "items": [ ... ],
   "total": 42,
   "page": 1,
-  "page_size": 20,
-  "total_pages": 3
+  "page_size": 6,
+  "total_pages": 7
 }
 ```
 
@@ -648,7 +648,7 @@ Access is gated by two dependency functions in `app/dependencies/auth.py`:
 
 **List users** — `GET /admin/users`
 
-Supports query filters `?role=admin` and `?is_active=false`. Paginated via `page` / `page_size` (max 100).
+Supports query filters `?role=admin` and `?is_active=false`. Paginated via `page` / `page_size` (max 10).
 
 ```json
 // Response 200
@@ -666,8 +666,8 @@ Supports query filters `?role=admin` and `?is_active=false`. Paginated via `page
   ],
   "total": 100,
   "page": 1,
-  "page_size": 20,
-  "total_pages": 5
+  "page_size": 6,
+  "total_pages": 17
 }
 ```
 
