@@ -48,10 +48,10 @@ def get_jobs_paginated(
     db: Session,
     user_id: int,
     page: int = 1,
-    page_size: int = 20,
+    page_size: int = 6,
 ) -> dict:
     page = max(1, page)
-    page_size = max(1, min(100, page_size))
+    page_size = max(1, min(10, page_size))
 
     base = db.query(JobApplication).filter(JobApplication.user_id == user_id)
     total = base.count()
