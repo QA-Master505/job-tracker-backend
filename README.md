@@ -1,10 +1,9 @@
 # Job Tracker Backend
 
-[![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.128-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Deployed on Railway](https://img.shields.io/badge/Deployed%20on-Railway-0B0D0E?logo=railway&logoColor=white)](https://job-tracker-backend-production-7acf.up.railway.app)
 [![CI](https://github.com/QA-Master505/job-tracker-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/QA-Master505/job-tracker-backend/actions/workflows/ci.yml)
+[![Deployed on Railway](https://img.shields.io/badge/Deployed%20on-Railway-0B0D0E?logo=railway&logoColor=white)](https://job-tracker-backend-production-7acf.up.railway.app)
+[![GitHub last commit](https://img.shields.io/github/last-commit/QA-Master505/job-tracker-backend)](https://github.com/QA-Master505/job-tracker-backend/commits/main)
+[![GitHub repo size](https://img.shields.io/github/repo-size/QA-Master505/job-tracker-backend)](https://github.com/QA-Master505/job-tracker-backend)
 
 A production-deployed RESTful API for a Job Application Tracker. Built with FastAPI and PostgreSQL. Features JWT authentication via httpOnly cookies, per-user data isolation, role-based admin system, audit logging, and full CRUD for job applications and interview rounds.
 
